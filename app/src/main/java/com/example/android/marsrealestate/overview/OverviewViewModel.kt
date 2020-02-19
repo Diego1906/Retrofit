@@ -7,6 +7,13 @@ import com.example.android.marsrealestate.network.MarsApi
 import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.*
 
+
+enum class MarsApiStatus {
+    LOADING,
+    ERROR,
+    DONE
+}
+
 /**
  * The [ViewModel] that is attached to the [OverviewFragment].
  */
@@ -19,10 +26,10 @@ class OverviewViewModel : ViewModel() {
     private val coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main)
 
     // The internal MutableLiveData String that stores the most recent response status
-    private val _status = MutableLiveData<String>()
+    private val _status = MutableLiveData<MarsApiStatus>()
 
     // The external immutable LiveData for the status String
-    val status: LiveData<String>
+    val status: LiveData<MarsApiStatus>
         get() = _status
 
     // Internally, we use a MutableLiveData, because we will be updating the List of MarsProperty
@@ -49,12 +56,15 @@ class OverviewViewModel : ViewModel() {
             // this will run on a thread managed by coroutines
             withContext(Dispatchers.IO) {
                 try {
+                    _status.postValue(MarsApiStatus.LOADING)
+
                     // Get the List<MarsProperty> object for our Retrofit request
                     val listResult = MarsApi.retrofitService.getProperties()
-                    _status.postValue("Success: ${listResult.size}")
+                    _status.postValue(MarsApiStatus.DONE)
                     _properties.postValue(listResult)
                 } catch (ex: Exception) {
-                    _status.postValue("Failure: ${ex.message}")
+                    _status.postValue(MarsApiStatus.ERROR)
+                    _properties.postValue(ArrayList())
                 }
             }
         }
