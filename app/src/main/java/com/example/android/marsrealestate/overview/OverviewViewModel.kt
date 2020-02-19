@@ -25,10 +25,10 @@ class OverviewViewModel : ViewModel() {
     // The Coroutine runs using the Main (UI) dispatcher
     private val coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main)
 
-    // The internal MutableLiveData String that stores the most recent response status
+    // The internal MutableLiveData that stores the most recent request
     private val _status = MutableLiveData<MarsApiStatus>()
 
-    // The external immutable LiveData for the status String
+    // The external immutable LiveData for the request status
     val status: LiveData<MarsApiStatus>
         get() = _status
 
@@ -53,16 +53,22 @@ class OverviewViewModel : ViewModel() {
      */
     private fun getMarsRealEstateProperties() {
         coroutineScope.launch {
+
             // this will run on a thread managed by coroutines
             withContext(Dispatchers.IO) {
+
                 try {
                     _status.postValue(MarsApiStatus.LOADING)
 
+                    delay(500)
+
                     // Get the List<MarsProperty> object for our Retrofit request
                     val listResult = MarsApi.retrofitService.getProperties()
+
                     _status.postValue(MarsApiStatus.DONE)
+
                     _properties.postValue(listResult)
-                } catch (ex: Exception) {
+                } catch (ex: Throwable) {
                     _status.postValue(MarsApiStatus.ERROR)
                     _properties.postValue(ArrayList())
                 }

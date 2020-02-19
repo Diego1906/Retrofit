@@ -11,6 +11,7 @@ import com.example.android.marsrealestate.network.MarsProperty
 import com.example.android.marsrealestate.overview.MarsApiStatus
 import com.example.android.marsrealestate.overview.PhotoGridAdapter
 
+
 /**
  * Uses the Glide library to load an image by URL into an [ImageView]
  */
@@ -36,11 +37,20 @@ fun bindRecyclerView(recyclerView: RecyclerView, data: List<MarsProperty>?) {
     adapter.submitList(data)
 }
 
+/**
+ * This binding adapter displays the [MarsApiStatus] of the network request in an image view. When
+ * the request is loading, it displays a loading_animation. If the request has an error, it
+ * displays a broken image to reflect the connection error. When the request is finished, it
+ * hides the image view.
+ */
 @BindingAdapter("marsApiStatus")
 fun bindStatus(statusImageView: ImageView, status: MarsApiStatus?) {
     when (status) {
         MarsApiStatus.LOADING -> {
+            val size = 350
             statusImageView.visibility = View.VISIBLE
+            statusImageView.minimumWidth = size
+            statusImageView.minimumHeight = size
             statusImageView.setImageResource(R.drawable.loading_animation)
         }
         MarsApiStatus.ERROR -> {
