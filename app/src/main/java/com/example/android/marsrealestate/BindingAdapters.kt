@@ -57,6 +57,10 @@ fun bindStatus(statusImageView: ImageView, status: MarsApiStatus?) {
             statusImageView.visibility = View.VISIBLE
             statusImageView.setImageResource(R.drawable.ic_connection_error)
         }
+        MarsApiStatus.NO_INTERNET_CONNECTION -> {
+            statusImageView.visibility = View.VISIBLE
+            statusImageView.setImageResource(R.drawable.ic_no_internet_connection)
+        }
         MarsApiStatus.DONE -> {
             statusImageView.visibility = View.GONE
         }

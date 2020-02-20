@@ -1,5 +1,9 @@
 package com.example.android.marsrealestate.overview
 
+import android.app.Application
+import android.content.Context
+import android.net.ConnectivityManager
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,13 +15,14 @@ import kotlinx.coroutines.*
 enum class MarsApiStatus {
     LOADING,
     ERROR,
-    DONE
+    DONE,
+    NO_INTERNET_CONNECTION
 }
 
 /**
  * The [ViewModel] that is attached to the [OverviewFragment].
  */
-class OverviewViewModel : ViewModel() {
+class OverviewViewModel(application: Application) : AndroidViewModel(application) {
 
     // Create a Coroutine scope using a job to be able to cancel when needed
     private var viewModelJob = Job()
@@ -41,10 +46,11 @@ class OverviewViewModel : ViewModel() {
         get() = _properties
 
     /**
-     * Call getMarsRealEstateProperties() on init so we can display status immediately.
+     * Call checkConnectionIsAvaliable() on init so we can check connection before of the connect
+     * at API/Retrofit for display status immediately.
      */
     init {
-        getMarsRealEstateProperties()
+        checkConnectionIsAvaliable()
     }
 
     /**
@@ -60,7 +66,7 @@ class OverviewViewModel : ViewModel() {
                 try {
                     _status.postValue(MarsApiStatus.LOADING)
 
-                    delay(500)
+                    delay(100)
 
                     // Get the List<MarsProperty> object for our Retrofit request
                     val listResult = MarsApi.retrofitService.getProperties()
@@ -84,4 +90,20 @@ class OverviewViewModel : ViewModel() {
         super.onCleared()
         viewModelJob.cancel()
     }
+
+    private fun checkConnectionIsAvaliable() {
+
+        val application = getApplication<Application>()
+
+        val connectivityManager: ConnectivityManager =
+                application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val networkInfo = connectivityManager.activeNetworkInfo
+
+        if (networkInfo != null && networkInfo.isConnected)
+            getMarsRealEstateProperties()
+        else
+            _status.value = MarsApiStatus.NO_INTERNET_CONNECTION
+    }
 }
+
