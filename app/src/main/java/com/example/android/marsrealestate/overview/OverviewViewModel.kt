@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.android.marsrealestate.network.MarsApi
+import com.example.android.marsrealestate.network.MarsApiFilter
 import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.*
 
@@ -63,35 +64,6 @@ class OverviewViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
-     * Gets Mars real estate property information from the Mars API Retrofit service and updates the
-     * [MarsProperty] [List] [LiveData]. The Retrofit service returns a List<MarsProperty>
-     */
-    private fun getMarsRealEstateProperties() {
-        coroutineScope.launch {
-
-            // this will run on a thread managed by coroutines
-            withContext(Dispatchers.IO) {
-
-                try {
-                    _status.postValue(MarsApiStatus.LOADING)
-
-                    delay(100)
-
-                    // Get the List<MarsProperty> object for our Retrofit request
-                    val listResult = MarsApi.retrofitService.getProperties()
-
-                    _status.postValue(MarsApiStatus.DONE)
-
-                    _properties.postValue(listResult)
-                } catch (ex: Throwable) {
-                    _status.postValue(MarsApiStatus.ERROR)
-                    _properties.postValue(ArrayList())
-                }
-            }
-        }
-    }
-
-    /**
      * When the [ViewModel] is finished, we cancel our coroutine [viewModelJob], which tells the
      * Retrofit service to stop.
      */
@@ -110,9 +82,40 @@ class OverviewViewModel(application: Application) : AndroidViewModel(application
         val networkInfo = connectivityManager.activeNetworkInfo
 
         if (networkInfo != null && networkInfo.isConnected)
-            getMarsRealEstateProperties()
+            getMarsRealEstateProperties(MarsApiFilter.SHOW_ALL)
         else
             _status.value = MarsApiStatus.NO_INTERNET_CONNECTION
+    }
+
+    /**
+     * Gets filtered Mars real estate property information from the Mars API Retrofit service and
+     * updates the [MarsProperty] [List] and [MarsApiStatus] [LiveData]. The Retrofit service
+     * returns a List<MarsProperty>.
+     * @param filter the [MarsApiFilter] that is sent as part of the web server request
+     */
+    private fun getMarsRealEstateProperties(filter: MarsApiFilter) {
+        coroutineScope.launch {
+
+            // this will run on a thread managed by coroutines
+            withContext(Dispatchers.IO) {
+
+                try {
+                    _status.postValue(MarsApiStatus.LOADING)
+
+                    delay(100)
+
+                    // Get the List<MarsProperty> object for our Retrofit request
+                    val listResult = MarsApi.retrofitService.getProperties(filter.value)
+
+                    _status.postValue(MarsApiStatus.DONE)
+
+                    _properties.postValue(listResult)
+                } catch (ex: Throwable) {
+                    _status.postValue(MarsApiStatus.ERROR)
+                    _properties.postValue(ArrayList())
+                }
+            }
+        }
     }
 
     /**
@@ -128,6 +131,15 @@ class OverviewViewModel(application: Application) : AndroidViewModel(application
      */
     fun displayPropertyDetailsComplete() {
         _navigateToSelectedProperty.value = null
+    }
+
+    /**
+     * Updates the data set filter for the web services by querying the data with the new filter
+     * by calling [getMarsRealEstateProperties]
+     * @param filter the [MarsApiFilter] that is sent as part of the web server request
+     */
+    fun updateFilter(filter: MarsApiFilter) {
+        getMarsRealEstateProperties(filter)
     }
 }
 
